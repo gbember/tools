@@ -73,7 +73,7 @@ func (cr *configRow) format(buff *bytes.Buffer) error {
 		buff.WriteString(",")
 		buff.WriteString(s)
 	}
-	buff.WriteString("}\n")
+	buff.WriteString("}")
 	return nil
 }
 
@@ -175,7 +175,11 @@ func parse2json(writer io.Writer, rows []*xlsx.Row, configCells []*configCell, t
 		bs := make([]byte, 1024)
 		buff := bytes.NewBuffer(bs)
 		buff.Reset()
+		buff.WriteByte('[')
 		for i := 0; i < len(rows); i++ {
+			if i != 0 {
+				buff.WriteString(",\n")
+			}
 			cellValues, isEmptyRow := make_row_contents(rows[i], titles)
 			if isEmptyRow {
 				line++
@@ -186,11 +190,12 @@ func parse2json(writer io.Writer, rows []*xlsx.Row, configCells []*configCell, t
 			if err != nil {
 				return err
 			}
-			_, err = buff.WriteTo(writer)
-			if err != nil {
-				return err
-			}
 			cr.line++
+		}
+		buff.WriteByte(']')
+		_, err := buff.WriteTo(writer)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

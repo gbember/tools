@@ -10,3 +10,8 @@ protobuf文件格式:
 	TYPE1: required原生 optional数组
 	TYPE2: bool,int8,uint8,int16,uint16,int32,string,uint32,int64,uint64或者MESSAGE_NAME
 	FIELD_NAME:字符串  符合struct里的字段名定义
+	
+命令格式
+	cproto -inputDir InputDir -outDir OutDir
+		InputDir:*.proto文件所在目录 默认当前目录
+		OutDir:*_proto.go输出文件所在目录 默认当前目录

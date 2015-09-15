@@ -3,7 +3,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"time"
 	"util/tools/e2j/parse"
 )
@@ -17,10 +17,18 @@ var (
 
 func main() {
 	flag.Parse()
+	defer wait_exit()
 	startTime := time.Now()
 	err := parse.ParseDir(*inputDir, *outDir, *et, *sc)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		return
 	}
-	log.Println(time.Since(startTime))
+	fmt.Println("耗时:", time.Since(startTime))
+}
+
+func wait_exit() {
+	fmt.Print("按任意键关闭....")
+	var k int
+	fmt.Scan(&k)
 }

@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"time"
-	"util/tools/cproto/parse"
+
+	"github.com/gbember/tools/cproto/parse"
 )
 
 var (
@@ -47,6 +48,7 @@ func main() {
 		fmt.Println(errors.New(errStr))
 		return
 	}
+
 	fmt.Println("解析proto时间:", time.Since(startTime))
 }
 

@@ -181,7 +181,7 @@ func (protoMsg *ProtoMsg) write(writer *bufio.Writer) error {
 	writer.WriteString("func (r *" + protoMsg.Name + ")WriteMsgID(p *Packet){\n")
 	writer.WriteString("p.writeUint16(" + strings.ToUpper(protoMsg.Name) + ")\n}\n")
 
-	_, err = writer.WriteString("func (r *" + protoMsg.Name + ")Write(p *Packet) error {\n")
+	_, err = writer.WriteString("func (r *" + protoMsg.Name + ")Write(p *Packet) {\n")
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (protoMsg *ProtoMsg) write(writer *bufio.Writer) error {
 			} else {
 				writer.WriteString("p.writeUint16(uint16(len(r." + fp.Name + ")))\n")
 				writer.WriteString("for i:=0;i<len(r." + fp.Name + ");i++{\n")
-				writer.WriteString("err := r." + fp.Name + "[i].Write(p)\nif err != nil { return err }\n")
+				writer.WriteString("r." + fp.Name + "[i].Write(p)\n")
 				_, err = writer.WriteString("}\n")
 				if err != nil {
 					return err
@@ -210,14 +210,14 @@ func (protoMsg *ProtoMsg) write(writer *bufio.Writer) error {
 					return err
 				}
 			} else {
-				_, err = writer.WriteString("err := r." + fp.Name + ".Write(p)\nif err != nil { return err }\n")
+				_, err = writer.WriteString("r." + fp.Name + ".Write(p)\n")
 				if err != nil {
 					return err
 				}
 			}
 		}
 	}
-	_, err = writer.WriteString("return nil\n}\n")
+	_, err = writer.WriteString("}\n")
 	return nil
 }
 
@@ -293,7 +293,25 @@ func CreateProtoParseFile(dir string) error {
 		}
 		writer.WriteString("import (\"errors\"\n\"fmt\")\n")
 
-		writer.WriteString("func ParseProto(bin []byte) (msgID uint16, msg interface{}, err error) {\n" +
+		writer.WriteString("type Messager interface{\n")
+		writer.WriteString("Read(p *Packet) error \n")
+		writer.WriteString("WriteMsgID(p *Packet)\n")
+		writer.WriteString("Write(p *Packet)\n")
+		writer.WriteString("}\n")
+
+		writer.WriteString("type PMessage struct{\n")
+		writer.WriteString("id uint16\n")
+		writer.WriteString("msg Messager\n")
+		writer.WriteString("}\n")
+
+		writer.WriteString("func EncodeProto(msg Messager)[]byte{\n")
+		writer.WriteString("p := NewWriter()\n")
+		writer.WriteString("msg.WriteMsgID(p)\n")
+		writer.WriteString("msg.Write(p)\n")
+		writer.WriteString("return p.Data()\n")
+		writer.WriteString("}\n")
+
+		writer.WriteString("func DecodeProto(bin []byte) (msgID uint16, msg Messager, err error) {\n" +
 			"p := NewReader(bin)\n" +
 			"msgID, err = p.readUint16()\n" +
 			"if err != nil {return}\n" +

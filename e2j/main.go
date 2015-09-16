@@ -5,7 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"time"
-	"util/tools/e2j/parse"
+
+	"github.com/gbember/tools/e2j/parse"
 )
 
 var (

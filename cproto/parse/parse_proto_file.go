@@ -300,8 +300,8 @@ func CreateProtoParseFile(dir string) error {
 		writer.WriteString("}\n")
 
 		writer.WriteString("type PMessage struct{\n")
-		writer.WriteString("id uint16\n")
-		writer.WriteString("msg Messager\n")
+		writer.WriteString("ID uint16\n")
+		writer.WriteString("Msg Messager\n")
 		writer.WriteString("}\n")
 
 		writer.WriteString("func EncodeProto(msg Messager)[]byte{\n")

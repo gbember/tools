@@ -26,6 +26,10 @@ type Packet struct {
 	data []byte
 }
 
+func (p *Packet) SeekTo(n int) {
+	p.pos = p.pos + n
+}
+
 func (p *Packet) Data() []byte {
 	return p.data[0:p.pos]
 }

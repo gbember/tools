@@ -311,6 +311,14 @@ func CreateProtoParseFile(dir string) error {
 		writer.WriteString("return p.Data()\n")
 		writer.WriteString("}\n")
 
+		writer.WriteString("func EncodeProtoPacket(msg Messager,p *Packet)[]byte{\n")
+		writer.WriteString("msg.WriteMsgID(p)\n")
+		writer.WriteString("msg.Write(p)\n")
+		writer.WriteString("bs := p.Data()\n")
+		writer.WriteString("p.Reset()\n")
+		writer.WriteString("return bs\n")
+		writer.WriteString("}\n")
+
 		writer.WriteString("func DecodeProto(bin []byte) (msgID uint16, msg Messager, err error) {\n" +
 			"p := NewReader(bin)\n" +
 			"msgID, err = p.readUint16()\n" +

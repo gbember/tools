@@ -16,22 +16,26 @@ import (
 	"math"
 )
 
+const (
+	_DEFAULT_BUFF_SIZE = 512
+)
+
 type Packet struct {
 	pos  int
+	l    int
 	data []byte
 }
 
 func (p *Packet) Data() []byte {
-	return p.data[0:len(p.data)]
+	return p.data[0:p.pos]
 }
 
 func (p *Packet) Length() int {
-	return len(p.data)
+	return p.pos
 }
 
 func (p *Packet) Reset() {
 	p.pos = 0
-	p.data = p.data[0:0]
 }
 
 func NewReader(data []byte) *Packet {
@@ -39,7 +43,7 @@ func NewReader(data []byte) *Packet {
 }
 
 func NewWriter() *Packet {
-	return &Packet{data: make([]byte, 0, 512)}
+	return &Packet{data: make([]byte, _DEFAULT_BUFF_SIZE, _DEFAULT_BUFF_SIZE), l: _DEFAULT_BUFF_SIZE}
 }
 
 //=============================================== Readers
@@ -365,11 +369,13 @@ func (p *Packet) readArrayFloat64() (ret []float64, err error) {
 //================================================ Writers
 
 func (p *Packet) writeBool(v bool) {
+	p.grow(1)
 	if v {
-		p.data = append(p.data, byte(1))
+		p.data[p.pos] = 1
 	} else {
-		p.data = append(p.data, byte(0))
+		p.data[p.pos] = 0
 	}
+	p.pos++
 }
 
 func (p *Packet) writeArrayBool(v []bool) {
@@ -381,7 +387,9 @@ func (p *Packet) writeArrayBool(v []bool) {
 }
 
 func (p *Packet) writeInt8(v int8) {
-	p.data = append(p.data, byte(v))
+	p.grow(1)
+	p.data[p.pos] = byte(v)
+	p.pos++
 }
 func (p *Packet) writeArrayInt8(v []int8) {
 	l := uint16(len(v))
@@ -392,7 +400,9 @@ func (p *Packet) writeArrayInt8(v []int8) {
 }
 
 func (p *Packet) writeUint8(v uint8) {
-	p.data = append(p.data, v)
+	p.grow(1)
+	p.data[p.pos] = v
+	p.pos++
 }
 
 func (p *Packet) writeArrayUint8(v []uint8) {
@@ -405,7 +415,13 @@ func (p *Packet) writeArrayUint8(v []uint8) {
 
 func (p *Packet) writeString(v string) {
 	p.writeUint16(uint16(len(v)))
-	p.data = append(p.data, v...)
+	bs := []byte(v)
+	l := len(bs)
+	p.grow(l)
+	for i := 0; i < l; i++ {
+		p.data[p.pos] = bs[i]
+		p.pos++
+	}
 }
 func (p *Packet) writeArrayString(v []string) {
 	l := uint16(len(v))
@@ -416,7 +432,11 @@ func (p *Packet) writeArrayString(v []string) {
 }
 
 func (p *Packet) writeUint16(v uint16) {
-	p.data = append(p.data, byte(v>>8), byte(v))
+	p.grow(2)
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(8)
+	p.pos++
 }
 func (p *Packet) writeArrayUint16(v []uint16) {
 	l := uint16(len(v))
@@ -427,7 +447,11 @@ func (p *Packet) writeArrayUint16(v []uint16) {
 }
 
 func (p *Packet) writeInt16(v int16) {
-	p.data = append(p.data, byte(v>>8), byte(v))
+	p.grow(2)
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(8)
+	p.pos++
 }
 func (p *Packet) writeArrayInt16(v []int16) {
 	l := uint16(len(v))
@@ -438,7 +462,15 @@ func (p *Packet) writeArrayInt16(v []int16) {
 }
 
 func (p *Packet) writeInt32(v int32) {
-	p.data = append(p.data, byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+	p.grow(4)
+	p.data[p.pos] = byte(v >> 24)
+	p.pos++
+	p.data[p.pos] = byte(v >> 16)
+	p.pos++
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(v)
+	p.pos++
 }
 func (p *Packet) writeArrayInt32(v []int32) {
 	l := uint16(len(v))
@@ -449,7 +481,15 @@ func (p *Packet) writeArrayInt32(v []int32) {
 }
 
 func (p *Packet) writeUint32(v uint32) {
-	p.data = append(p.data, byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+	p.grow(4)
+	p.data[p.pos] = byte(v >> 24)
+	p.pos++
+	p.data[p.pos] = byte(v >> 16)
+	p.pos++
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(v)
+	p.pos++
 }
 func (p *Packet) writeArrayUint32(v []uint32) {
 	l := uint16(len(v))
@@ -460,7 +500,23 @@ func (p *Packet) writeArrayUint32(v []uint32) {
 }
 
 func (p *Packet) writeUint64(v uint64) {
-	p.data = append(p.data, byte(v>>56), byte(v>>48), byte(v>>40), byte(v>>32), byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+	p.grow(8)
+	p.data[p.pos] = byte(v >> 56)
+	p.pos++
+	p.data[p.pos] = byte(v >> 48)
+	p.pos++
+	p.data[p.pos] = byte(v >> 40)
+	p.pos++
+	p.data[p.pos] = byte(v >> 32)
+	p.pos++
+	p.data[p.pos] = byte(v >> 24)
+	p.pos++
+	p.data[p.pos] = byte(v >> 16)
+	p.pos++
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(v)
+	p.pos++
 }
 func (p *Packet) writeArrayUint64(v []uint64) {
 	l := uint16(len(v))
@@ -471,7 +527,23 @@ func (p *Packet) writeArrayUint64(v []uint64) {
 }
 
 func (p *Packet) writeInt64(v int64) {
-	p.data = append(p.data, byte(v>>56), byte(v>>48), byte(v>>40), byte(v>>32), byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
+	p.grow(8)
+	p.data[p.pos] = byte(v >> 56)
+	p.pos++
+	p.data[p.pos] = byte(v >> 48)
+	p.pos++
+	p.data[p.pos] = byte(v >> 40)
+	p.pos++
+	p.data[p.pos] = byte(v >> 32)
+	p.pos++
+	p.data[p.pos] = byte(v >> 24)
+	p.pos++
+	p.data[p.pos] = byte(v >> 16)
+	p.pos++
+	p.data[p.pos] = byte(v >> 8)
+	p.pos++
+	p.data[p.pos] = byte(v)
+	p.pos++
 }
 func (p *Packet) writeArrayInt64(v []int64) {
 	l := uint16(len(v))
@@ -502,6 +574,16 @@ func (p *Packet) writeArrayFloat64(v []float64) {
 	p.writeUint16(l)
 	for i := uint16(0); i < l; i++ {
 		p.writeFloat64(v[i])
+	}
+}
+
+func (p *Packet) grow(n int) {
+	if n+p.pos > p.l {
+		l := p.l + _DEFAULT_BUFF_SIZE + n
+		bs := make([]byte, l, l)
+		copy(bs, p.data)
+		p.data = bs
+		p.l = l
 	}
 }`
 

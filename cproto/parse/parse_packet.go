@@ -439,7 +439,7 @@ func (p *Packet) writeUint16(v uint16) {
 	p.grow(2)
 	p.data[p.pos] = byte(v >> 8)
 	p.pos++
-	p.data[p.pos] = byte(8)
+	p.data[p.pos] = byte(v)
 	p.pos++
 }
 func (p *Packet) writeArrayUint16(v []uint16) {
@@ -454,7 +454,7 @@ func (p *Packet) writeInt16(v int16) {
 	p.grow(2)
 	p.data[p.pos] = byte(v >> 8)
 	p.pos++
-	p.data[p.pos] = byte(8)
+	p.data[p.pos] = byte(v)
 	p.pos++
 }
 func (p *Packet) writeArrayInt16(v []int16) {
